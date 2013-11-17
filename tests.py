@@ -3,14 +3,9 @@ import unittest
 #import os.path
 
 import prodigal
+import translate
 
 class ProdigalTestCase(unittest.TestCase):
-    #def test_find_files(self):
-        ## Find all files in current directory
-        #path  = os.path.dirname(os.path.abspath(__file__))
-        #files = prodigal.find_files(path)
-        #self.assertLessEqual(1, len(files))
-        #self.assertIn(os.path.join(path, "tests.py"), files)
 
     def test_render(self):
         content = "Hello World!"
@@ -21,6 +16,15 @@ class ProdigalTestCase(unittest.TestCase):
 
         content = "{% trans %}Pouac{% endtrans %}"
         self.assertEqual("Pouac", prodigal.render(content))
+
+    def test_translate(self):
+        translator = translate.Translator()
+        translator.add("{% trans %}Hello world!{% endtrans %}")
+        po_content = translator.get_po()
+        self.assertEqual("""msgid "Hello world!"
+msgstr ""
+
+""", po_content)
 
 if __name__ == "__main__":
     unittest.main()
