@@ -3,18 +3,6 @@ import argparse
 import os.path
 import jinja2
 import gettext
-#from glob import glob
-
-#def find_files(path):
-    #"""find_files
-    #Find all files located in the current path and return an iterable on all the
-    #absolute file paths.
-
-    #:param path:
-    #"""
-    #files = glob(os.path.join(path, "*"))
-    #print files
-    #return map(os.path.abspath, files)
 
 JINJA_ENV = None
 def get_jinja_env(src_path=None):
@@ -41,22 +29,53 @@ def render(content):
     """
     return get_jinja_env().from_string(content).render()
 
-def prodigal(src_path, dst_path):
+def translate(language, src_path):
+    pass
+
+def generate(src_path, dst_path, language=None):
     jinja_env = get_jinja_env(src_path)
     for template_name in jinja_env.loader.list_templates():
         # Skip non-html files
+        # TODO not a good idea, but how to exclude .*.swp files?
         file_ext = os.path.splitext(template_name)[1]
         if file_ext != ".html":
             continue
 
         # Compile template
         template = jinja_env.get_template(template_name)
-        print template.render()
+        rendered = template.render()
+
+        # Save
+        # TODO create directory if it doesn't exist
+        # TODO delete extraneous files
+        dst_file_path = os.path.join(dst_path, template_name)
+        with open(dst_file_path, "w") as f:
+            f.write(rendered)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="An awesome static website generator")
-    parser.add_argument("src_path", help="Path of source files")
-    parser.add_argument("dst_path", help="Path of destination files")
+    parser = argparse.ArgumentParser(description="Prodigal: Yet another static website generator!")
+
+    subparsers = parser.add_subparsers(dest="command", help="")
+
+    parser_generate = subparsers.add_parser("generate",
+            help="Generate a static website")
+    parser_generate.add_argument("src_path",
+            help="Path of source files")
+    parser_generate.add_argument("dst_path",
+            help="Path of destination files")
+    parser_generate.add_argument("-l", "--language",
+            help="Language of the generated content")
+
+    parser_translate = subparsers.add_parser("translate",
+            help="Produce the translation files for the static website")
+    parser_translate.add_argument("language",
+            help="Language code for generated translation files. E.g: fr, en_US.")
+    parser_translate.add_argument("src_path",
+            help="Path of source files")
+
     args = parser.parse_args()
 
-    prodigal(args.src_path, args.dst_path)
+    if args.command == "generate":
+        generate(args.src_path, args.dst_path, args.language)
+    elif args.command == "translate":
+        translate(args.language, args.src_path)
