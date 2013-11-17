@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import unittest
-#import os.path
+import tempfile
 
 import prodigal
 import translate
@@ -25,6 +25,20 @@ class ProdigalTestCase(unittest.TestCase):
 msgstr ""
 
 """, po_content)
+
+    def test_translate_file(self):
+        tmp = tempfile.NamedTemporaryFile()
+        tmp.write("{% trans %}Pouac{% endtrans %}")
+        tmp.flush()
+
+        translator = translate.Translator()
+        translator.add_file(tmp.name)
+        po_content = translator.get_po()
+        self.assertEqual("""#: %s:1
+msgid "Pouac"
+msgstr ""
+
+""" % tmp.name, po_content)
 
 if __name__ == "__main__":
     unittest.main()

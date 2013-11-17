@@ -3,6 +3,7 @@ import argparse
 import os.path
 import jinja2
 import gettext
+from translate import Translator
 
 JINJA_ENV = None
 def get_jinja_env(src_path=None):
@@ -30,7 +31,13 @@ def render(content):
     return get_jinja_env().from_string(content).render()
 
 def translate(language, src_path):
-    pass
+    jinja_env = get_jinja_env(src_path)
+    translator = Translator(src_path)
+    for template_name in jinja_env.loader.list_templates():
+        translator.add_file(os.path.join(src_path, template_name))
+    # Save .po file
+    po_path = os.path.join(src_path, language + ".po")
+    translator.write_po(po_path)
 
 def generate(src_path, dst_path, language=None):
     jinja_env = get_jinja_env(src_path)
