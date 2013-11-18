@@ -5,6 +5,7 @@ import logging
 import sys
 import jinja2
 import babel.support
+import gettext
 from translate import Translator
 from translate import compile as compile_translations
 
@@ -21,9 +22,12 @@ def get_jinja_env(src_path=None):
     return jinja_env
 
 def install_translations(jinja_env, src_path, locale):
-    with open(os.path.join(src_path, locale + ".mo")) as f:
-            translations = babel.support.Translations(f)
-            jinja_env.install_gettext_translations(translations)
+    if locale is not None:
+        with open(os.path.join(src_path, locale + ".mo")) as f:
+                translations = babel.support.Translations(f)
+                jinja_env.install_gettext_translations(translations)
+    else:
+        jinja_env.install_gettext_translations(gettext)
 
 def render(content):
     """render
@@ -37,7 +41,9 @@ def translate_content(locale, src_path):
     jinja_env = get_jinja_env(src_path)
     translator = Translator()
     for template_name in jinja_env.loader.list_templates():
-        translator.add_file(os.path.join(src_path, template_name))
+        # TODO How to process more than just the html files?
+        if os.path.splitext(template_name)[1] == ".html":
+            translator.add_file(os.path.join(src_path, template_name))
     # Save .po file
     po_path = os.path.join(src_path, locale + ".po")
     translator.write_po(po_path)
@@ -57,7 +63,7 @@ def generate(src_path, dst_path, locale=None):
 
     if locale is not None:
         compile_locale(src_path, locale)
-        install_translations(jinja_env, src_path, locale)
+    install_translations(jinja_env, src_path, locale)
 
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
@@ -71,11 +77,10 @@ def generate(src_path, dst_path, locale=None):
 
         # Compile template
         template = jinja_env.get_template(template_name)
-        rendered = template.render()
+        rendered = template.render().encode("utf-8")
 
         # Save
         # TODO create directory if it doesn't exist
-        # TODO delete extraneous files
         dst_file_path = os.path.join(dst_path, template_name)
         with open(dst_file_path, "w") as f:
             f.write(rendered)
@@ -87,19 +92,19 @@ if __name__ == "__main__":
 
     parser_generate = subparsers.add_parser("generate",
             help="Generate a static website")
-    parser_generate.add_argument("src_path",
+    parser_generate.add_argument("src_path", metavar="SOURCE",
             help="Path of source files")
-    parser_generate.add_argument("dst_path",
+    parser_generate.add_argument("dst_path", metavar="DEST",
             help="Path of destination files")
     parser_generate.add_argument("-l", "--locale",
             help="Locale of the generated content")
 
     parser_translate = subparsers.add_parser("translate",
             help="Produce the translation files for the static website")
-    parser_translate.add_argument("locale",
-            help="Locale code for generated translation files. E.g: fr, en_US.")
-    parser_translate.add_argument("src_path",
+    parser_translate.add_argument("src_path", metavar="SOURCE",
             help="Path of source files")
+    parser_translate.add_argument("locale", metavar="LOCALE",
+            help="Locale code for generated translation files. E.g: fr, en_US.")
 
     args = parser.parse_args()
 
