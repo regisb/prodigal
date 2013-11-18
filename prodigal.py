@@ -1,26 +1,29 @@
 #! /usr/bin/env python
 import argparse
 import os.path
+import logging
+import sys
 import jinja2
-import gettext
+import babel.support
 from translate import Translator
+from translate import compile as compile_translations
 
-JINJA_ENV = None
 def get_jinja_env(src_path=None):
     """get_jinja_env
     Get the jinja2 environment required to compile templates.
     """
-    global JINJA_ENV
-    if JINJA_ENV is None:
-        # Create jinja environment
-        if src_path is not None:
-            template_loader = jinja2.FileSystemLoader(src_path)
-        else:
-            template_loader = jinja2.BaseLoader()
-        JINJA_ENV = jinja2.Environment(loader=template_loader,
-                                       extensions=['jinja2.ext.i18n'])
-        JINJA_ENV.install_gettext_translations(gettext)
-    return JINJA_ENV
+    if src_path is not None:
+        template_loader = jinja2.FileSystemLoader(src_path)
+    else:
+        template_loader = jinja2.BaseLoader()
+    jinja_env = jinja2.Environment(loader=template_loader,
+                                   extensions=['jinja2.ext.i18n'])
+    return jinja_env
+
+def install_translations(jinja_env, src_path, locale):
+    with open(os.path.join(src_path, locale + ".mo")) as f:
+            translations = babel.support.Translations(f)
+            jinja_env.install_gettext_translations(translations)
 
 def render(content):
     """render
@@ -30,17 +33,35 @@ def render(content):
     """
     return get_jinja_env().from_string(content).render()
 
-def translate(language, src_path):
+def translate_content(locale, src_path):
     jinja_env = get_jinja_env(src_path)
-    translator = Translator(src_path)
+    translator = Translator()
     for template_name in jinja_env.loader.list_templates():
         translator.add_file(os.path.join(src_path, template_name))
     # Save .po file
-    po_path = os.path.join(src_path, language + ".po")
+    po_path = os.path.join(src_path, locale + ".po")
     translator.write_po(po_path)
 
-def generate(src_path, dst_path, language=None):
+def compile_locale(src_path, locale):
+    po_file_path = os.path.join(src_path, locale + ".po")
+    if not os.path.exists(po_file_path):
+        if len(sys.argv) > 0:
+            logging.warning("Locale file %s does not exist yet. You probably need to run \
+                    '%s translate %s %s' first." % \
+                    (po_file_path, sys.argv[0], locale, src_path))
+            return
+    compile_translations(po_file_path)
+
+def generate(src_path, dst_path, locale=None):
     jinja_env = get_jinja_env(src_path)
+
+    if locale is not None:
+        compile_locale(src_path, locale)
+        install_translations(jinja_env, src_path, locale)
+
+    if not os.path.exists(dst_path):
+        os.makedirs(dst_path)
+
     for template_name in jinja_env.loader.list_templates():
         # Skip non-html files
         # TODO not a good idea, but how to exclude .*.swp files?
@@ -70,19 +91,19 @@ if __name__ == "__main__":
             help="Path of source files")
     parser_generate.add_argument("dst_path",
             help="Path of destination files")
-    parser_generate.add_argument("-l", "--language",
-            help="Language of the generated content")
+    parser_generate.add_argument("-l", "--locale",
+            help="Locale of the generated content")
 
     parser_translate = subparsers.add_parser("translate",
             help="Produce the translation files for the static website")
-    parser_translate.add_argument("language",
-            help="Language code for generated translation files. E.g: fr, en_US.")
+    parser_translate.add_argument("locale",
+            help="Locale code for generated translation files. E.g: fr, en_US.")
     parser_translate.add_argument("src_path",
             help="Path of source files")
 
     args = parser.parse_args()
 
     if args.command == "generate":
-        generate(args.src_path, args.dst_path, args.language)
+        generate(args.src_path, args.dst_path, args.locale)
     elif args.command == "translate":
-        translate(args.language, args.src_path)
+        translate_content(args.locale, args.src_path)

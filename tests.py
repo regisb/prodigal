@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import unittest
 import tempfile
+import os
 
 import prodigal
 import translate
@@ -39,6 +40,22 @@ msgid "Pouac"
 msgstr ""
 
 """ % tmp.name, po_content)
+
+    def test_compile(self):
+        po_path = "/tmp/fr.po"
+        mo_path = "/tmp/fr.mo"
+        with open(po_path, "w") as tmp:
+            tmp.write("""#: /some/file:1
+msgid "Hello world!"
+msgstr "Bonjour tout le monde !"
+""")
+        if os.path.exists(mo_path):
+            os.remove(mo_path)
+
+        translate.compile(po_path)
+        self.assertTrue(os.path.exists(mo_path))
+        os.remove(mo_path)
+        os.remove(po_path)
 
 if __name__ == "__main__":
     unittest.main()
