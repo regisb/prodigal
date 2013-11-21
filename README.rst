@@ -13,7 +13,7 @@ multiple versions of your website, one for each language.
 Installing
 ==========
 
-TODO
+    pip install -e git+https://github.com/regisb/prodigal.git#egg=prodigal
 
 Usage
 =====
