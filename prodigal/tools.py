@@ -39,12 +39,35 @@ def render(content):
     install_translations(jinja_env)
     return jinja_env.from_string(content).render()
 
+def should_translate(path):
+    """should_translate
+    Return True if the template should be added to the list of files to
+    translate. We translate only content from .html files.
+
+    :param path:
+    """
+    return os.path.splitext(path)[1] == ".html"
+
+def should_render(path):
+    """should_render
+    Return True if the template should be rendered (and moved to the
+    destination directory later). We skip non-html files and files that start
+    with "_".
+
+    :param path:
+    """
+    if not should_translate(path):
+        return False
+    filename = os.path.basename(path)
+    if filename.startswith("_"):
+        return False
+    return True
+
 def translate_content(locale, src_path):
     jinja_env = get_jinja_env(src_path)
     translator = Translator()
     for template_name in jinja_env.loader.list_templates():
-        # TODO How to process more than just the html files?
-        if os.path.splitext(template_name)[1] == ".html":
+        if should_translate(template_name):
             translator.add_file(os.path.join(src_path, template_name))
     # Save .po file
     po_path = os.path.join(src_path, locale + ".po")
@@ -70,10 +93,7 @@ def generate(src_path, dst_path, locale=None):
 
 def generate_templates(jinja_env, dst_path):
     for template_name in jinja_env.loader.list_templates():
-        # Skip non-html files
-        # TODO not a good idea, but how to exclude .*.swp files?
-        file_ext = os.path.splitext(template_name)[1]
-        if file_ext != ".html":
+        if not should_render(template_name):
             continue
 
         # Compile template

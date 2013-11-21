@@ -8,6 +8,13 @@ import translate
 
 class ProdigalTestCase(unittest.TestCase):
 
+    def test_should_render(self):
+        self.assertTrue(tools.should_render("index.html"))
+        self.assertFalse(tools.should_render("_base.html"))
+        self.assertFalse(tools.should_render("/tmp/_base.html"))
+        self.assertFalse(tools.should_render("/tmp/.gitignore"))
+        self.assertFalse(tools.should_render(".index.html.swp"))
+
     def test_render(self):
         content = "Hello World!"
         self.assertEqual(content, tools.render(content))
@@ -17,6 +24,12 @@ class ProdigalTestCase(unittest.TestCase):
 
         content = "{% trans %}Pouac{% endtrans %}"
         self.assertEqual("Pouac", tools.render(content))
+
+    def test_should_translate(self):
+        self.assertTrue(tools.should_translate("index.html"))
+        self.assertTrue(tools.should_translate("/tmp/_base.html"))
+        self.assertFalse(tools.should_translate("/tmp/.gitignore"))
+        self.assertFalse(tools.should_translate(".index.html.swp"))
 
     def test_translate(self):
         translator = translate.Translator()

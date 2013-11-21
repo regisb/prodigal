@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import argparse
-from prodigal.tools import generate, translate_content
+from tools import generate, translate_content
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prodigal: Yet another static website generator!")
