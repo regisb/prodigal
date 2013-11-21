@@ -23,7 +23,7 @@ Prodigal generates content from Jinja2 templates. Content generation should proc
 1. Write your html/jinja2 content in src/
 2. Generate a translation file in the target language:
 
-    prodigal.py translate src/ fr
+    prodigal.py translate fr src/
 
 3. Edit the generated src/fr.po file in order to produce translations for all your localized strings.
 4. Generate the localized version of your content:
@@ -37,8 +37,9 @@ Consider the following content:
 
     example/
         \_ _base.html
-        \_ post1.html
-        \_ post2.html
+        \_ blog
+            \_ post1.html
+            \_ post2.html
 
 _base.html:
 
@@ -47,12 +48,12 @@ _base.html:
         <body>{% block content %}{% endblock %}</body>
     </html>
 
-post1.html:
+blog/post1.html:
 
     {% extends "_base.html" %}
     {% block content %}Hey, check it out! I just wrote a great blog post.{% endblock %}
 
-post2.html:
+blog/post2.html:
 
     <html>
         <body>{% trans %}Some entirely different (translated) content.{% endtrans %}</body>
@@ -73,18 +74,15 @@ And finally, you can use this translation file to deploy a translated version of
 
     prodigal.py generate -l fr ./example /var/www/
    
-=====================
-Generate a static website with templates from src/:
+Development
+===========
 
-    prodigal generate src/ dst/
+If you wish to write a contribution, don't forget to write unit tests! Tests can be run with:
 
-Produce French translation files for a static website:
+    ./prodigal/tests.py
 
-    prodigal translate src/ fr
 
-Generate a French-translated version of a static website:
 
-    prodigal generate -l fr src/ dst/
 
 
     "Occasionally, members of the Institute of Arcane Study acquire a taste for

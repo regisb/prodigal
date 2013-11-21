@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import argparse
 import os.path
 import logging
 import sys
@@ -21,8 +20,8 @@ def get_jinja_env(src_path=None):
                                    extensions=['jinja2.ext.i18n'])
     return jinja_env
 
-def install_translations(jinja_env, src_path, locale):
-    if locale is not None:
+def install_translations(jinja_env, src_path=None, locale=None):
+    if locale is not None and src_path is not None:
         with open(os.path.join(src_path, locale + ".mo")) as f:
                 translations = babel.support.Translations(f)
                 jinja_env.install_gettext_translations(translations)
@@ -34,8 +33,11 @@ def render(content):
     Compile and render a string.
 
     :param content:
+    :param locale:
     """
-    return get_jinja_env().from_string(content).render()
+    jinja_env = get_jinja_env()
+    install_translations(jinja_env)
+    return jinja_env.from_string(content).render()
 
 def translate_content(locale, src_path):
     jinja_env = get_jinja_env(src_path)
@@ -64,10 +66,9 @@ def generate(src_path, dst_path, locale=None):
     if locale is not None:
         compile_locale(src_path, locale)
     install_translations(jinja_env, src_path, locale)
+    generate_templates(jinja_env, dst_path)
 
-    if not os.path.exists(dst_path):
-        os.makedirs(dst_path)
-
+def generate_templates(jinja_env, dst_path):
     for template_name in jinja_env.loader.list_templates():
         # Skip non-html files
         # TODO not a good idea, but how to exclude .*.swp files?
@@ -80,35 +81,10 @@ def generate(src_path, dst_path, locale=None):
         rendered = template.render().encode("utf-8")
 
         # Save
-        # TODO create directory if it doesn't exist
         dst_file_path = os.path.join(dst_path, template_name)
+        dst_dirname = os.path.dirname(dst_file_path)
+        if not os.path.exists(dst_dirname):
+            os.makedirs(dst_dirname)
         with open(dst_file_path, "w") as f:
             f.write(rendered)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Prodigal: Yet another static website generator!")
-
-    subparsers = parser.add_subparsers(dest="command", help="")
-
-    parser_generate = subparsers.add_parser("generate",
-            help="Generate a static website")
-    parser_generate.add_argument("src_path", metavar="SOURCE",
-            help="Path of source files")
-    parser_generate.add_argument("dst_path", metavar="DEST",
-            help="Path of destination files")
-    parser_generate.add_argument("-l", "--locale",
-            help="Locale of the generated content")
-
-    parser_translate = subparsers.add_parser("translate",
-            help="Produce the translation files for the static website")
-    parser_translate.add_argument("src_path", metavar="SOURCE",
-            help="Path of source files")
-    parser_translate.add_argument("locale", metavar="LOCALE",
-            help="Locale code for generated translation files. E.g: fr, en_US.")
-
-    args = parser.parse_args()
-
-    if args.command == "generate":
-        generate(args.src_path, args.dst_path, args.locale)
-    elif args.command == "translate":
-        translate_content(args.locale, args.src_path)

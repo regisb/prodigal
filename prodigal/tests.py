@@ -3,20 +3,20 @@ import unittest
 import tempfile
 import os
 
-import prodigal
+import tools
 import translate
 
 class ProdigalTestCase(unittest.TestCase):
 
     def test_render(self):
         content = "Hello World!"
-        self.assertEqual(content, prodigal.render(content))
+        self.assertEqual(content, tools.render(content))
 
         content = "{% for i in range(10) %}{{ i }}{% endfor %}"
-        self.assertEqual("0123456789", prodigal.render(content))
+        self.assertEqual("0123456789", tools.render(content))
 
         content = "{% trans %}Pouac{% endtrans %}"
-        self.assertEqual("Pouac", prodigal.render(content))
+        self.assertEqual("Pouac", tools.render(content))
 
     def test_translate(self):
         translator = translate.Translator()
