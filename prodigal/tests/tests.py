@@ -3,8 +3,8 @@ import unittest
 import tempfile
 import os
 
-import tools
-import translate
+from prodigal import tools
+from prodigal import translate
 
 class ProdigalTestCase(unittest.TestCase):
 
@@ -70,5 +70,8 @@ msgstr "Bonjour tout le monde !"
         os.remove(mo_path)
         os.remove(po_path)
 
-if __name__ == "__main__":
+def main():
     unittest.main()
+
+if __name__ == "__main__":
+    main()

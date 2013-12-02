@@ -33,7 +33,7 @@ setup(
     author_email="regis@behmo.com",
     url="https://github.com/regisb/prodigal",
     packages=["prodigal"],
-    scripts=["prodigal/prodigal"],
+    entry_points={'console_scripts': ["prodigal = prodigal.main:main"]},
     install_requires=["Jinja2", "babel"],
     license="BSD",
     classifiers=classifiers()

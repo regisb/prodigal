@@ -2,7 +2,7 @@
 import argparse
 from tools import generate, translate_content
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Prodigal: Yet another static website generator!")
 
     subparsers = parser.add_subparsers(dest="command", help="")
@@ -29,3 +29,6 @@ if __name__ == "__main__":
         generate(args.src_path, args.dst_path, args.locale)
     elif args.command == "translate":
         translate_content(args.locale, args.src_path)
+
+if __name__ == "__main__":
+    main()

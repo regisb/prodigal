@@ -79,7 +79,7 @@ Development
 
 If you wish to write a contribution, don't forget to write unit tests! Tests can be run with:
 
-    ./prodigal/tests.py
+    python -m unittest discover
 
 
 
