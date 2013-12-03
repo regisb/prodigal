@@ -103,6 +103,20 @@ If you wish to write a contribution, don't forget to write unit tests! Tests can
     python -m unittest discover
 
 
+F.A.Q
+=====
+
+Questions? Comments? Just open an issue request, tweet me at
+`@regisb <https://twitter.com/#!/regisb>`_, or shoot me an email at
+`regis@behmo.com <mailto:regis@behmo.com>`_.
+
+Q. There are so many static website generators already, why did you create
+another one?
+
+A. None of the static website generators I found allowed me to generate two
+versions of the same website in two different languages. I needed to do that
+for `nulinu.li <http://nulinu.li>`_. I figured: how hard can it be? Existing
+bricks where already present in Django, I only had to pull them out.
 
 
 
