@@ -72,3 +72,9 @@ def compile(po_file_path):
     # Write .mo file
     with open(mo_file_path, "w") as f:
         write_mo(f, catalog)
+
+def compile_if_possible(src_path, locale):
+    if locale is not None:
+        po_path = os.path.join(src_path, locale + ".po")
+        if os.path.exists(po_path):
+            compile(po_path)

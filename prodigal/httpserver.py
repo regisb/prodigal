@@ -7,6 +7,7 @@ from StringIO import StringIO
 
 import jinjaenv
 import templates
+import translate
 
 class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     JINJAENV    = None
@@ -56,6 +57,7 @@ class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 def serve(src_path, locale, address):
     HttpRequestHandler.ROOT_PATH    = os.path.abspath(src_path)
     HttpRequestHandler.LOCALE       = locale
+    translate.compile_if_possible(src_path, locale)
 
     ip, port = address.split(":")
     server_address = (ip, int(port))
