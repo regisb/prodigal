@@ -85,6 +85,28 @@ msgstr "Bonjour tout le monde !"
         os.remove(mo_path)
         os.remove(po_path)
 
+    def test_translation_updater(self):
+        src_path = tempfile.mkdtemp()
+        updater = translate.Updater(src_path, "fr")
+        po_path = os.path.join(src_path, "fr.po")
+        mo_path = os.path.join(src_path, "fr.mo")
+
+        # .po file doesn't exist
+        self.assertFalse(updater.run())
+
+        # Create po file
+        with open(po_path, "w"):
+            pass
+
+        # .mo file doesn't exist
+        self.assertTrue(updater.run())
+        self.assertTrue(os.path.exists(mo_path))
+
+        # .mo file was compiled just now
+        self.assertFalse(updater.run())
+
+        shutil.rmtree(src_path)
+
 class ToolsTranslateTest(unittest.TestCase):
     def setUp(self):
         self.src_path = tempfile.mkdtemp()

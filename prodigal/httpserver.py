@@ -13,6 +13,7 @@ class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
     JINJAENV    = None
     ROOT_PATH   = None
     LOCALE      = None
+    TRANSLATION_UPDATER = None
 
     @property
     def jinjaenv(self):
@@ -21,10 +22,27 @@ class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                                                        HttpRequestHandler.LOCALE)
         return HttpRequestHandler.JINJAENV
 
+    @property
+    def locale(self):
+        return HttpRequestHandler.LOCALE
+
+    @property
+    def translation_updater(self):
+        if HttpRequestHandler.TRANSLATION_UPDATER is None:
+            HttpRequestHandler.TRANSLATION_UPDATER = translate.Updater(HttpRequestHandler.ROOT_PATH,
+                                                                       HttpRequestHandler.LOCALE)
+        return HttpRequestHandler.TRANSLATION_UPDATER
+
     def do_GET(self):
         f = self.send_head()
         if f:
             if hasattr(f, "name") and templates.should_render(f.name):
+                # Re-compile translations, if necessary
+                if self.locale is not None:
+                    if self.translation_updater.run():
+                        print "Recompiled translations"
+                        HttpRequestHandler.JINJAENV = None
+
                 # Compile template
                 template_name = os.path.relpath(f.name, HttpRequestHandler.ROOT_PATH)
                 template = self.jinjaenv.get_template(template_name)

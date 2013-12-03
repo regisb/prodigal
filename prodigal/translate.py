@@ -54,6 +54,36 @@ class Translator(object):
         with open(path, "w") as f:
             f.write(self.get_po())
 
+class Updater(object):
+    def __init__(self, src_path, locale):
+        self.src_path = src_path
+        self.locale = locale
+
+    @property
+    def po_path(self):
+        return os.path.join(self.src_path, self.locale + ".po")
+    @property
+    def mo_path(self):
+        return os.path.join(self.src_path, self.locale + ".mo")
+    def po_mtime(self):
+        return os.stat(self.po_path).st_mtime
+    def mo_mtime(self):
+        return os.stat(self.mo_path).st_mtime
+
+    def run(self):
+        """run
+        Compile the .po translation file if it was modified more recently than
+        the .mo file.
+        """
+        if not os.path.exists(self.po_path):
+            return False
+        if os.path.exists(self.mo_path) and self.po_mtime() <= self.mo_mtime():
+            return False
+
+        # Compile locale file
+        compile(self.po_path)
+        return True
+
 def compile(po_file_path):
     """compile
     Compile a xx.po file into an xx.mo file.

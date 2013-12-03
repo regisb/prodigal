@@ -86,8 +86,8 @@ folder thanks to the embedded HTTP server:
     prodigal serve -l fr ./example
 
 Then head to http://127.0.0.1:8000 in your browser to see your rendered
-template. Note that you will have to restart your HTTP server every time you
-want to update your translations.
+template. Note that translations will be recompiled on-the-fly as you modify
+your .po file.
    
 Development
 ===========
