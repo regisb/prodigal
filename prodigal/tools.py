@@ -7,6 +7,7 @@ from translate import Translator
 from translate import compile as compile_translations
 import jinjaenv
 import templates
+import httpserver
 
 def render(string):
     """render
@@ -74,3 +75,13 @@ def generate_templates(src_path, dst_path, locale):
             os.makedirs(dst_dirname)
         with open(dst_file_path, "w") as f:
             f.write(rendered)
+
+def serve(src_path, locale):
+    """serve
+    Run a simple HTTP server that renders templates dynamically.
+
+    :param src_path:
+    :param locale:
+    """
+
+    return httpserver.serve(src_path, locale)

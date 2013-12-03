@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import argparse
-from tools import generate, translate_templates
+from tools import generate, translate_templates, serve
 
 def main():
     parser = argparse.ArgumentParser(description="Prodigal: Yet another static website generator!")
@@ -23,12 +23,20 @@ def main():
     parser_translate.add_argument("src_path", metavar="SOURCE",
             help="Path of source files")
 
+    parser_serve = subparsers.add_parser("serve",
+            help="Run a web server to dynamically serve your source folder.")
+    parser_serve.add_argument("-l", "--locale", metavar="LOCALE",
+            help="Locale code for generated translation files. E.g: fr, en_US.")
+    parser_serve.add_argument("src_path", metavar="SOURCE",
+            help="Path of source files")
     args = parser.parse_args()
 
     if args.command == "generate":
         generate(args.src_path, args.dst_path, args.locale)
     elif args.command == "translate":
         translate_templates(args.locale, args.src_path)
+    elif args.command == "serve":
+        serve(args.src_path, args.locale)
 
 if __name__ == "__main__":
     main()
