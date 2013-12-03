@@ -27,6 +27,8 @@ def main():
             help="Run a web server to dynamically serve your source folder.")
     parser_serve.add_argument("-l", "--locale", metavar="LOCALE",
             help="Locale code for generated translation files. E.g: fr, en_US.")
+    parser_serve.add_argument("-a", "--address", metavar="IPADDR:PORT", default="127.0.0.1:8000",
+            help="IP address and port where the content should be served.")
     parser_serve.add_argument("src_path", metavar="SOURCE",
             help="Path of source files")
     args = parser.parse_args()
@@ -36,7 +38,7 @@ def main():
     elif args.command == "translate":
         translate_templates(args.locale, args.src_path)
     elif args.command == "serve":
-        serve(args.src_path, args.locale)
+        serve(args.src_path, args.locale, args.address)
 
 if __name__ == "__main__":
     main()

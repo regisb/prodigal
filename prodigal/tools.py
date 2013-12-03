@@ -76,12 +76,13 @@ def generate_templates(src_path, dst_path, locale):
         with open(dst_file_path, "w") as f:
             f.write(rendered)
 
-def serve(src_path, locale):
+def serve(src_path, locale, address):
     """serve
     Run a simple HTTP server that renders templates dynamically.
 
     :param src_path:
     :param locale:
+    :param address:
     """
 
-    return httpserver.serve(src_path, locale)
+    return httpserver.serve(src_path, locale, address)
