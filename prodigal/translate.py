@@ -6,12 +6,19 @@ from jinja2.ext import babel_extract
 from StringIO import StringIO
 
 class Translator(object):
-    def __init__(self):
-        self.catalog = Catalog(project="The Awesome Project",
-                version="v42",
-                msgid_bugs_address=None,
-                copyright_holder=None,
-                charset="utf-8")
+    def __init__(self, path=None):
+        if path is not None and os.path.exists(path):
+            # Load existing translations
+            locale = os.path.splitext(os.path.basename(path))[0]
+            with open(path) as f:
+                self.catalog = read_po(f, locale)
+        else:
+            # Create new catalog
+            self.catalog = Catalog(project="The Awesome Project",
+                    version="v42",
+                    msgid_bugs_address=None,
+                    copyright_holder=None,
+                    charset="utf-8")
 
     def add_messages(self, extracted, filepath=None):
         for lineno, funcname, message, comments in extracted:
@@ -37,8 +44,8 @@ class Translator(object):
     def get_po(self):
         stringio = StringIO()
         write_po(stringio, self.catalog, width=76, no_location=False, omit_header=True,
-                sort_output=False, sort_by_file=False, ignore_obsolete=False,
-                include_previous=False)
+                 sort_output=True, sort_by_file=True, ignore_obsolete=True,
+                 include_previous=False)
         po_content = stringio.getvalue()
         stringio.close()
         return po_content
@@ -64,4 +71,4 @@ def compile(po_file_path):
 
     # Write .mo file
     with open(mo_file_path, "w") as f:
-            write_mo(f, catalog)
+        write_mo(f, catalog)

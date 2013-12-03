@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import argparse
-from tools import generate, translate_content
+from tools import generate, translate_templates
 
 def main():
     parser = argparse.ArgumentParser(description="Prodigal: Yet another static website generator!")
@@ -28,7 +28,7 @@ def main():
     if args.command == "generate":
         generate(args.src_path, args.dst_path, args.locale)
     elif args.command == "translate":
-        translate_content(args.locale, args.src_path)
+        translate_templates(args.locale, args.src_path)
 
 if __name__ == "__main__":
     main()
