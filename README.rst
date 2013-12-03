@@ -23,12 +23,18 @@ Prodigal generates content from Jinja2 templates. Content generation should proc
 1. Write your html/jinja2 content in src/
 2. Generate a translation file in the target language:
 
-    prodigal.py translate fr src/
+    prodigal translate fr src/
 
 3. Edit the generated src/fr.po file in order to produce translations for all your localized strings.
 4. Generate the localized version of your content:
 
     prodigal generate -l fr src/ dst/
+
+While you are developing your website, you might want to skip the generation
+step and see directly what your website looks like. Prodigal comes with an
+embedded HTTP server which can serve your content from your source folder:
+
+    prodigal serve -l fr src/
 
 Example
 =======
@@ -36,10 +42,10 @@ Example
 Consider the following content:
 
     example/
-        \_ _base.html
-        \_ blog
-            \_ post1.html
-            \_ post2.html
+        _base.html
+        blog/
+            post1.html
+            post2.html
 
 _base.html:
 
@@ -61,7 +67,7 @@ blog/post2.html:
 
 You can first generate the French translation file for this website:
 
-    prodigal.py translate example/ fr
+    prodigal translate example/ fr
 
 This command generated the file `example/fr.po`. You may now edit it in order
 to provide the correct French translation for your content:
@@ -72,7 +78,16 @@ to provide the correct French translation for your content:
 
 And finally, you can use this translation file to deploy a translated version of your website:
 
-    prodigal.py generate -l fr ./example /var/www/
+    prodigal generate -l fr ./example /var/www/
+
+In further iterations, you can serve your content directly from your source
+folder thanks to the embedded HTTP server:
+    
+    prodigal serve -l fr ./example
+
+Then head to http://127.0.0.1:8000 in your browser to see your rendered
+template. Note that you will have to restart your HTTP server every time you
+want to update your translations.
    
 Development
 ===========
