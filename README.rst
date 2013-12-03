@@ -77,6 +77,10 @@ And finally, you can use this translation file to deploy a translated version of
 Development
 ===========
 
+Install development dependencies:
+
+    pip install -r requirements.txt
+
 If you wish to write a contribution, don't forget to write unit tests! Tests can be run with:
 
     python -m unittest discover

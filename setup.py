@@ -24,6 +24,10 @@ def classifiers():
             'Topic :: Text Processing :: Markup :: HTML',
             ]
 
+def install_requires():
+    with open(os.path.join(os.path.dirname(__file__), "requirements.txt")) as f:
+        return [l.split("==")[0] for l in f.readlines()]
+
 setup(
     name="prodigal",
     version="0.1",
@@ -34,7 +38,7 @@ setup(
     url="https://github.com/regisb/prodigal",
     packages=["prodigal"],
     entry_points={'console_scripts': ["prodigal = prodigal.main:main"]},
-    install_requires=["Jinja2", "babel"],
+    install_requires=install_requires(),
     license="BSD",
     classifiers=classifiers()
 )
