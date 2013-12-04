@@ -84,5 +84,5 @@ def serve(src_path, locale, address):
     httpd = BaseHTTPServer.HTTPServer(server_address, HttpRequestHandler)
 
     sa = httpd.socket.getsockname()
-    print "Serving HTTP on", "http://" + sa[0] + ":" + sa[1], "..."
+    print "Serving HTTP on", "http://" + sa[0] + ":" + str(sa[1]), "..."
     httpd.serve_forever()
