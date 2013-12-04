@@ -3,6 +3,8 @@ import babel.support
 import gettext
 import jinja2
 
+import filters
+
 def _install_translations(jinja_env, src_path=None, locale=None):
     """install_translations
     Load translations into the environment, such that it can render translated
@@ -28,8 +30,9 @@ def get(src_path=None, locale=None):
         template_loader = jinja2.FileSystemLoader(src_path)
     else:
         template_loader = jinja2.BaseLoader()
-    jinja_env = jinja2.Environment(loader=template_loader,
-                                   extensions=['jinja2.ext.i18n'])
-    _install_translations(jinja_env, src_path, locale)
-    return jinja_env
+    env = jinja2.Environment(loader=template_loader,
+                             extensions=['jinja2.ext.i18n'])
+    _install_translations(env, src_path, locale)
+    filters.register_all(env)
+    return env
 

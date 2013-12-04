@@ -4,9 +4,11 @@ import tempfile
 import os
 import shutil
 
+from prodigal import jinjaenv
 from prodigal import tools
 from prodigal import translate
 from prodigal import templates
+from prodigal import filters
 
 class ProdigalTestCase(unittest.TestCase):
 
@@ -184,6 +186,19 @@ msgstr "Bonjour tout le monde !"
         self.assertTrue(os.path.exists(f1_dst_path))
         self.assertFalse(os.path.exists(f2_dst_path))
         self.assertEqual("Bonjour tout le monde !", open(f1_dst_path).read())
+
+class FiltersTest(unittest.TestCase):
+    def test_filters_are_registered(self):
+        env = jinjaenv.get()
+        self.assertIn("pouac", env.filters.keys())
+        self.assertEqual(filters.pouac, env.filters["pouac"])
+
+    def test_pouac(self):
+        string = "{{ 'Hello!'|pouac }}"
+        result = tools.render(string)
+        self.assertEqual("Hello! Pouac!", result)
+
+
 
 def main():
     unittest.main()
