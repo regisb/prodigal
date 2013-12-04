@@ -116,12 +116,10 @@ def serve(src_path, locale, address):
     translate.compile_if_possible(src_path, locale)
 
     ip, port = address.split(":")
-    #server_address = (ip, int(port))
-    server_address = ("", int(port))
+    server_address = (ip, int(port))
 
     HttpRequestHandler.protocol_version = "HTTP/1.0"
     httpd = BaseHTTPServer.HTTPServer(server_address, HttpRequestHandler)
-    #httpd = BaseHTTPServer.HTTPServer(server_address, SimpleHTTPServer.SimpleHTTPRequestHandler)
 
     sa = httpd.socket.getsockname()
     print "Serving HTTP on", "http://" + sa[0] + ":" + str(sa[1]), "..."
