@@ -190,15 +190,33 @@ msgstr "Bonjour tout le monde !"
 class FiltersTest(unittest.TestCase):
     def test_filters_are_registered(self):
         env = jinjaenv.get()
-        self.assertIn("pouac", env.filters.keys())
-        self.assertEqual(filters.pouac, env.filters["pouac"])
+        self.assertIn("set_date", env.filters.keys())
+        self.assertIn("get_date", env.filters.keys())
+        self.assertEqual(filters.set_date, env.filters["set_date"])
+        self.assertEqual(filters.get_date, env.filters["get_date"])
 
-    def test_pouac(self):
-        string = "{{ 'Hello!'|pouac }}"
+    def test_set_date(self):
+        string = "{{ 'Title'|set_date('2013-11') }}"
         result = tools.render(string)
-        self.assertEqual("Hello! Pouac!", result)
+        self.assertEqual("", result)
+        self.assertEqual("2013-11", filters.get_date("Title"))
 
+    def test_date_variables(self):
+        root = tempfile.mkdtemp()
+        variables_path = os.path.join(root, "_variables")
+        with open(variables_path, "w") as f:
+            f.write("{{ 'pouac'|set_date('2013-11-01') }}\n")
+            f.write("{{ 'prout'|set_date('2013-10-01 18:15') }}")
 
+        self.assertEqual([], filters.latest_pages(1))
+
+        jinjaenv.get(root)
+
+        self.assertEqual("2013-11-01", filters.get_date("pouac"))
+        self.assertEqual(["pouac"], filters.latest_pages(1))
+        self.assertEqual(["pouac", "prout"], filters.latest_pages(2))
+
+        shutil.rmtree(root)
 
 def main():
     unittest.main()

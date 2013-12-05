@@ -5,15 +5,16 @@ def filter(fn):
     fn.is_filter = True
     return fn
 
-@filter
-def pouac(value):
-    return value + " Pouac!"
-
 TEMPLATE_DATES = {}
 @filter
 def set_date(template_name, date):
     global TEMPLATE_DATES
     TEMPLATE_DATES[template_name] = date
+    return ""
+
+@filter
+def get_date(template_name):
+    return TEMPLATE_DATES.get(template_name)
 
 @filter
 def latest_pages(count):
