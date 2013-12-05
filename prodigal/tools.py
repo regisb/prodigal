@@ -3,20 +3,10 @@ import os.path
 import logging
 import sys
 
-from translate import Translator
-from translate import compile as compile_translations
+import translate
 import jinjaenv
 import templates
 import httpserver
-
-def render(string):
-    """render
-    Compile and render a string.
-
-    :param string:
-    :param locale:
-    """
-    return jinjaenv.get().from_string(string).render()
 
 def translate_templates(locale, src_path):
     """translate_templates
@@ -26,10 +16,10 @@ def translate_templates(locale, src_path):
     :param src_path:
     """
     po_path = os.path.join(src_path, locale + ".po")
-    translator = Translator(po_path)
-    for template_name in templates.list(src_path):
-        if templates.should_translate(template_name):
-            translator.add_file(template_name)
+    translator = translate.Translator(po_path)
+    for template_name in templates.list_translatable_names(src_path):
+        path = os.path.join(src_path, template_name)
+        translator.add_file(path)
     translator.write_po(po_path)
 
 def compile_locale(src_path, locale):
@@ -40,7 +30,7 @@ def compile_locale(src_path, locale):
                     '%s translate %s %s' first." % \
                     (po_file_path, sys.argv[0], locale, src_path))
             return
-    compile_translations(po_file_path)
+    translate.compile(po_file_path)
 
 def generate(src_path, dst_path, locale=None):
     """generate
@@ -58,15 +48,11 @@ def generate(src_path, dst_path, locale=None):
     generate_templates(src_path, dst_path, locale)
 
 def generate_templates(src_path, dst_path, locale):
-    jinja_env = jinjaenv.get(src_path, locale)
-    for template_name in templates.list(src_path):
-        if not templates.should_render(template_name):
-            continue
-
-        # Compile template
-        template_name = os.path.relpath(template_name, src_path)
-        template = jinja_env.get_template(template_name)
-        rendered = template.render().encode("utf-8")
+    jinjaenv.init(src_path, locale)
+    env = jinjaenv.get()
+    for template_name in env.renderable_template_names():
+        # Render
+        rendered = env.render_template(template_name)
 
         # Save
         dst_file_path = os.path.join(dst_path, template_name)

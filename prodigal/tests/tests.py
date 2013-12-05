@@ -24,7 +24,7 @@ class ProdigalTestCase(unittest.TestCase):
         f1 = tempfile.NamedTemporaryFile(suffix=".htm", dir=root, delete=False)
         f2 = tempfile.NamedTemporaryFile(suffix=".html", dir=root, delete=False)
 
-        template_list = list(templates.list(root))
+        template_list = list(templates.list_files(root))
         template_set = set(template_list)
         self.assertEqual(2, len(template_list))
         self.assertIn(f1.name, template_set)
@@ -34,13 +34,13 @@ class ProdigalTestCase(unittest.TestCase):
 
     def test_render(self):
         content = "Hello World!"
-        self.assertEqual(content, tools.render(content))
+        self.assertEqual(content, jinjaenv.get().render_string(content))
 
         content = "{% for i in range(10) %}{{ i }}{% endfor %}"
-        self.assertEqual("0123456789", tools.render(content))
+        self.assertEqual("0123456789", jinjaenv.get().render_string(content))
 
         content = "{% trans %}Pouac{% endtrans %}"
-        self.assertEqual("Pouac", tools.render(content))
+        self.assertEqual("Pouac", jinjaenv.get().render_string(content))
 
     def test_should_translate(self):
         self.assertTrue(templates.should_translate("index.html"))
@@ -108,6 +108,34 @@ msgstr "Bonjour tout le monde !"
         self.assertFalse(updater.run())
 
         shutil.rmtree(src_path)
+
+class JinjaenvTest(unittest.TestCase):
+    def setUp(self):
+        self.src_path  = tempfile.mkdtemp()
+        jinjaenv.init(self.src_path)
+
+    def tearDown(self):
+        shutil.rmtree(self.src_path)
+
+    def test_render_url(self):
+        path = os.path.join(self.src_path, "_foo.html")
+
+        # No variables
+        with open(path, "w") as f:
+            f.write("catch")
+        filters.add_url("blog", "_foo.html")
+        self.assertEqual("catch", jinjaenv.get().render_url("blog"))
+        self.assertEqual("catch", jinjaenv.get().render_path(os.path.join(self.src_path, "blog")))
+
+        # No variables
+        with open(path, "w") as f:
+            f.write("catch {{ times }}")
+        filters.add_url("blog", "_foo.html", {"times": 22})
+
+        content = jinjaenv.get().render_template("_foo.html", {"times": 42})
+        self.assertEqual("catch 42", content)
+        content = jinjaenv.get().render_url("blog")
+        self.assertEqual("catch 22", content)
 
 class ToolsTranslateTest(unittest.TestCase):
     def setUp(self):
@@ -189,7 +217,7 @@ msgstr "Bonjour tout le monde !"
 
 class FiltersTest(unittest.TestCase):
     def test_filters_are_registered(self):
-        env = jinjaenv.get()
+        env = jinjaenv.get()._jinja_env
         self.assertIn("set_date", env.filters.keys())
         self.assertIn("get_date", env.filters.keys())
         self.assertEqual(filters.set_date, env.filters["set_date"])
@@ -197,7 +225,7 @@ class FiltersTest(unittest.TestCase):
 
     def test_set_date(self):
         string = "{{ 'Title'|set_date('2013-11') }}"
-        result = tools.render(string)
+        result = jinjaenv.get().render_string(string)
         self.assertEqual("", result)
         self.assertEqual("2013-11", filters.get_date("Title"))
 
@@ -210,7 +238,7 @@ class FiltersTest(unittest.TestCase):
 
         self.assertEqual([], filters.latest_pages(1))
 
-        jinjaenv.get(root)
+        jinjaenv.init(root)
 
         self.assertEqual("2013-11-01", filters.get_date("pouac"))
         self.assertEqual(["pouac"], filters.latest_pages(1))

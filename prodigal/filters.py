@@ -22,15 +22,16 @@ def latest_pages(count):
     dates.sort(reverse=True)
     return [d[1] for d in dates[:count]]
 
-PAGES = {}
+URLS = {}
 @filter
-def add_page(url, template_name, variables={}):
-    global PAGES
-    PAGES[url] = {
-            "template": template_name,
+def add_url(url, template_name, variables={}):
+    global URLS
+    URLS[url] = {
+            "template_name": template_name,
             "variables": variables
     }
-
+def get_url(url):
+    return URLS.get(url)
 
 def register_all(env):
     # List all functions with @filter decorator

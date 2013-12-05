@@ -6,21 +6,12 @@ import SimpleHTTPServer
 from cStringIO import StringIO
 
 import jinjaenv
-import templates
 import translate
 
 class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
-    JINJAENV    = None
     ROOT_PATH   = None
     LOCALE      = None
     TRANSLATION_UPDATER = None
-
-    @property
-    def jinjaenv(self):
-        if HttpRequestHandler.JINJAENV is None:
-            HttpRequestHandler.JINJAENV = jinjaenv.get(HttpRequestHandler.ROOT_PATH,
-                                                       HttpRequestHandler.LOCALE)
-        return HttpRequestHandler.JINJAENV
 
     @property
     def locale(self):
@@ -35,7 +26,6 @@ class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
     def send_head(self):
         path = self.translate_path(self.path)
-        f = None
         if os.path.isdir(path):
             if not self.path.endswith('/'):
                 # redirect browser - doing basically what apache does
@@ -50,42 +40,27 @@ class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                     break
             else:
                 return self.list_directory(path)
-        ctype = self.guess_type(path)
-        try:
-            # Always read in binary mode. Opening files in text mode may cause
-            # newline translations, making the actual size of the content
-            # transmitted *less* than the content-length!
-            f = open(path, 'rb')
-        except IOError:
-            self.send_error(404, "File not found")
+        ctype = self.guess_type(jinjaenv.get().url_file_path(path))
+
+        rendered = jinjaenv.get().render_path(path)
+        if rendered is None:
+            self.send_error(404, "File not found: " + path)
             return None
 
         # Content length and last-modified attributes
-        fs = os.fstat(f.fileno())
-        content_length = fs[6]
-        last_modified = self.date_time_string(fs.st_mtime)
+        #fs = os.fstat(f.fileno())
+        #content_length = fs[6]
+        #last_modified = self.date_time_string(fs.st_mtime)
 
-        # Compile template if necessary
-        if templates.should_render(f.name):
-            # Re-compile translations, if necessary
-            if self.locale is not None:
-                if self.translation_updater.run():
-                    print "Recompiled translations"
-                    HttpRequestHandler.JINJAENV = None
-            # Compile template
-            template_name = os.path.relpath(f.name, HttpRequestHandler.ROOT_PATH)
-            template = self.jinjaenv.get_template(template_name)
-            rendered = template.render().encode("utf-8")
-            s = StringIO()
-            s.write(rendered)
-            content_length = s.tell()
-            s.seek(0)
-            f = s
+        f = StringIO()
+        f.write(rendered)
+        content_length = f.tell()
+        f.seek(0)
 
         self.send_response(200)
         self.send_header("Content-type", ctype)
         self.send_header("Content-Length", str(content_length))
-        self.send_header("Last-Modified", last_modified)
+        #self.send_header("Last-Modified", last_modified)
         self.end_headers()
         return f
 
@@ -111,6 +86,7 @@ class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         return path
 
 def serve(src_path, locale, address):
+    jinjaenv.init(src_path, locale)
     HttpRequestHandler.ROOT_PATH    = os.path.abspath(src_path)
     HttpRequestHandler.LOCALE       = locale
     translate.compile_if_possible(src_path, locale)
