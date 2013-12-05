@@ -22,6 +22,16 @@ def latest_pages(count):
     dates.sort(reverse=True)
     return [d[1] for d in dates[:count]]
 
+PAGES = {}
+@filter
+def add_page(url, template_name, variables={}):
+    global PAGES
+    PAGES[url] = {
+            "template": template_name,
+            "variables": variables
+    }
+
+
 def register_all(env):
     # List all functions with @filter decorator
     module = sys.modules[__name__]
