@@ -6,6 +6,35 @@ import jinja2
 import filters
 import templates
 
+class TemplateLoader(jinja2.loaders.BaseLoader):
+    def __init__(self, src_path):
+        self.src_path = os.path.abspath(src_path)
+
+    def get_source(self, environment, template):
+        path = os.path.join(self.src_path, template)
+        if not os.path.exists(path):
+            raise jinja2.exceptions.TemplateNotFound(template)
+        contents = open(path).read().decode('utf-8')
+        mtime = os.path.getmtime(path)
+        def uptodate():
+            try:
+                return os.path.getmtime(path) == mtime
+            except OSError:
+                return False
+        return contents, path, uptodate
+
+    def list_templates(self):
+        paths = []
+        for (dirpath, dirnames, filenames) in os.walk(self.src_path):
+            for filename in filenames:
+                path = os.path.join(dirpath, filename)
+                ext = os.path.splitext(path)[1]
+                if ext != ".html":
+                    continue
+                path = os.path.relpath(path, self.src_path)
+                paths.append(path)
+        return paths
+
 def _install_translations(jinja_env, src_path=None, locale=None):
     """install_translations
     Load translations into the environment, such that it can render translated
@@ -31,7 +60,7 @@ def _get_jinja_env(src_path=None, locale=None):
     :param locale:
     """
     if src_path is not None:
-        template_loader = jinja2.FileSystemLoader(src_path)
+        template_loader = TemplateLoader(src_path)
     else:
         template_loader = jinja2.BaseLoader()
     env = jinja2.Environment(loader=template_loader,
@@ -49,8 +78,8 @@ class Environment(object):
 
         self._jinja_env = _get_jinja_env(self._src_path, self._locale)
 
-        if os.path.exists(os.path.join(self._src_path, "_config")):
-            self.render_template("_config")
+        if os.path.exists(os.path.join(self._src_path, "_config.html")):
+            self.render_template("_config.html")
 
     def template_name(self, path):
         return os.path.relpath(os.path.abspath(path), self._src_path)

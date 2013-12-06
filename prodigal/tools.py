@@ -2,11 +2,13 @@
 import os.path
 import logging
 import sys
+import shutil
 
 import translate
 import jinjaenv
 import templates
 import httpserver
+import media
 
 def translate_templates(locale, src_path):
     """translate_templates
@@ -67,6 +69,15 @@ def generate_templates(src_path, dst_path, locale):
             os.makedirs(dst_dirname)
         with open(dst_file_path, "w") as f:
             f.write(rendered)
+
+    # Copy media files
+    for folder in media.folders():
+        src_folder = os.path.join(src_path, folder)
+        dst_folder = os.path.join(dst_path, folder)
+        if os.path.exists(dst_folder):
+            # TODO synchronize files intelligently
+            shutil.rmtree(dst_folder)
+        shutil.copytree(src_folder, dst_folder)
 
 def serve(src_path, locale, address):
     """serve

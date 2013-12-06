@@ -2,6 +2,8 @@ import sys
 import inspect
 from collections import defaultdict
 
+import media
+
 ALIASES = defaultdict(dict)
 BLOG_TEMPLATE = None
 
@@ -86,6 +88,10 @@ def blog_post_template_name(alias):
             if "post" in properties["variables"]:
                 return properties["variables"]["post"]
     return None
+
+@filter
+def add_media(folder):
+    media.add(folder)
 
 def init():
     global ALIASES, BLOG_TEMPLATE
