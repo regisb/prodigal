@@ -231,7 +231,7 @@ class FiltersTest(unittest.TestCase):
 
     def test_date_variables(self):
         root = tempfile.mkdtemp()
-        variables_path = os.path.join(root, "_variables")
+        variables_path = os.path.join(root, "_config")
         with open(variables_path, "w") as f:
             f.write("{{ 'pouac'|set_date('2013-11-01') }}\n")
             f.write("{{ 'prout'|set_date('2013-10-01 18:15') }}")

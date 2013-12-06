@@ -23,23 +23,8 @@ def _install_translations(jinja_env, src_path=None, locale=None):
     else:
         jinja_env.install_gettext_translations(gettext)
 
-def _render_variables(env, src_path=None):
-    """_render_variables
-    Render the content of the _variables file, which loads helpful variables
-    such as the list of blog posts etc.
-
-    :param env:
-    :param src_path:
-    """
-    if src_path is not None:
-        variables_name = "_variables"
-        variables_path = os.path.join(src_path, variables_name)
-        if os.path.exists(variables_path):
-            env.get_template(variables_name).render()
-            return True
-    return False
-def get_jinja_env(src_path=None, locale=None):
-    """get_jinja_env
+def _get_jinja_env(src_path=None, locale=None):
+    """_get_jinja_env
     Get the jinja2 environment required to compile templates.
 
     :param src_path:
@@ -53,7 +38,6 @@ def get_jinja_env(src_path=None, locale=None):
                              extensions=['jinja2.ext.i18n'])
     _install_translations(env, src_path, locale)
     filters.register_all(env)
-    _render_variables(env, src_path)
     return env
 
 class Environment(object):
@@ -63,7 +47,10 @@ class Environment(object):
         self._src_path = None if src_path is None else os.path.abspath(src_path)
         self._locale = locale
 
-        self._jinja_env = get_jinja_env(self._src_path, self._locale)
+        self._jinja_env = _get_jinja_env(self._src_path, self._locale)
+
+        if os.path.exists(os.path.join(self._src_path, "_config")):
+            self.render_template("_config")
 
     def template_name(self, path):
         return os.path.relpath(os.path.abspath(path), self._src_path)
