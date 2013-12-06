@@ -5,16 +5,26 @@ import babel.support
 import gettext
 import jinja2
 
-import filters
-import templates
+import filters# TODO get rid of this circular dependency
 
 class TemplateLoader(jinja2.loaders.BaseLoader):
     def __init__(self, src_path):
         self.src_path = os.path.abspath(src_path)
+        self.aliases = {}
+
+    def add_alias(self, alias, template_name):
+        self.aliases[alias] = template_name
+
+    def get_path(self, template_name):
+        if template_name in self.aliases:
+            return os.path.join(self.src_path, self.aliases[template_name])
+        else:
+            return os.path.join(self.src_path, template_name)
 
     def get_source(self, environment, template):
-        path = os.path.join(self.src_path, template)
-        if not os.path.exists(path):
+        path = self.get_path(template)
+        ext = os.path.splitext(path)[1]
+        if not os.path.exists(path) or ext != ".html":
             raise jinja2.exceptions.TemplateNotFound(template)
         contents = open(path).read().decode('utf-8')
         mtime = os.path.getmtime(path)
@@ -27,6 +37,8 @@ class TemplateLoader(jinja2.loaders.BaseLoader):
 
     def list_templates(self):
         paths = []
+        for alias, template_name in self.aliases.iteritems():
+            paths.append(template_name)
         for (dirpath, dirnames, filenames) in os.walk(self.src_path):
             for filename in filenames:
                 path = os.path.join(dirpath, filename)
@@ -56,7 +68,7 @@ def _install_translations(jinja_env, src_path=None, locale=None):
 
 def _register_filters(env):
     # List all functions with @filter decorator in filters module
-    module = sys.modules["prodigal.filters"]
+    module = sys.modules[filters.__name__]
     for (fn_name, fn) in inspect.getmembers(module, inspect.isfunction):
         if hasattr(fn, "is_filter"):
             env.filters[fn_name] = fn
@@ -79,6 +91,7 @@ def _get_jinja_env(src_path=None, locale=None):
     return env
 
 class Environment(object):
+
     _instance = None
 
     def __init__(self, src_path=None, locale=None):
@@ -86,58 +99,81 @@ class Environment(object):
         self._locale = locale
 
         self._jinja_env = _get_jinja_env(self._src_path, self._locale)
+        self._variables = {}
 
-        if os.path.exists(os.path.join(self._src_path, "_config.html")):
-            self.render_template("_config.html")
+    def post_init(self):
+        if self._src_path is not None:
+            if os.path.exists(os.path.join(self._src_path, "_config.html")):
+                self.render_template("_config.html")
+
+    def set_variable(self, template_name, key, value):
+        if template_name not in self._variables:
+            self._variables[template_name] = {}
+        self._variables[template_name][key] = value
+
+    def get_variable(self, template_name, key):
+        return self._variables.get(template_name, {}).get(key)
+
+    def templates_with_variable(self, key):
+        for template_name, properties in self._variables.iteritems():
+            if key in properties:
+                yield template_name, properties[key]
+
+    def add_alias(self, alias, template_name, variables={}):
+        self._variables[alias] = variables
+        self._jinja_env.loader.add_alias(alias, template_name)
 
     def template_name(self, path):
         return os.path.relpath(os.path.abspath(path), self._src_path)
 
     def render_template(self, template_name, variables={}):
-        template = self._jinja_env.get_template(template_name)
+        try:
+            template = self._jinja_env.get_template(template_name)
+        except jinja2.exceptions.TemplateNotFound:
+            return None
 
-        varcopy = variables.copy()
-        if "template_name" not in varcopy:
-            varcopy["template_name"] = template_name
+        varcopy = {"template_name": template_name}
+        varcopy.update(self._variables.get(template_name, {}))
+        varcopy.update(variables)
         return template.render(varcopy).encode("utf-8")
 
     def render_string(self, string):
         return self._jinja_env.from_string(string).render()
 
-    def url_template_name(self, url):
-        relative_url = self.template_name(url)
-        url = filters.get_alias(relative_url)
-        if url is not None:
-            return os.path.join(self._src_path, url["template_name"])
-        return relative_url
+    def get_path(self, url):
+        template_name = self.template_name(url)
+        return self._jinja_env.loader.get_path(template_name)
 
     def render_relative_path(self, path):
         return self.render_path(os.path.join(self._src_path, path))
 
     def render_path(self, path):
         template_name = self.template_name(path)
-        url_data = filters.get_alias(template_name)
-        if url_data is not None:
-            return self.render_template(url_data["template_name"], url_data["variables"])
-        if templates.should_render(template_name) and template_name in self._jinja_env.list_templates():
-            return self.render_template(template_name, {})
+        variables = self._variables.get(template_name, {})
+
+        # 1) Try to render as a template
+        rendered = self.render_template(template_name, variables)
+        if rendered is not None:
+            return rendered
+
+        # 2) Just read the file
         path = os.path.join(self._src_path, template_name)
         if os.path.exists(path):
             return open(path, "rb").read()
+
+        # 3) Man, we failed...
         return None
 
     def renderable_urls(self):
-        for path in templates.list_renderable_files(self._src_path):
-            yield path
-        for alias in filters.list_aliases():
-            yield os.path.join(self._src_path, alias)
+        for template_name in self._jinja_env.loader.list_templates():
+            yield os.path.join(self._src_path, template_name)
         raise StopIteration
 
 def init(src_path=None, locale=None):
-    if Environment._instance is not None:
-        del(Environment._instance)
-    filters.init()
+    # TODO fix this somehow
+    #filters.init()
     Environment._instance = Environment(src_path, locale)
+    Environment._instance.post_init()
 
 def reinit():
     src_path = Environment._instance._src_path

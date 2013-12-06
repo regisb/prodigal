@@ -1,71 +1,46 @@
-from collections import defaultdict
-
 import media
+import jinjaenv
 
-ALIASES = defaultdict(dict)
+# TODO get rid of this global variable
 BLOG_TEMPLATE = None
 
 def filter(fn):
+    """filter
+    Filter decorator that will indicate that functions should be made available
+    as filters in jinja2 templates.
+
+    :param fn:
+    """
     fn.is_filter = True
     return fn
 
-def template_alias(template_name):
-    for alias, properties in ALIASES.iteritems():
-        if properties.get("template_name") == template_name:
-            return alias
-    return template_name
-
-@filter
-def template_name(alias):
-    if alias in ALIASES and "template_name" in ALIASES[alias]:
-        return ALIASES[alias]["template_name"]
-    return alias
-
-@filter
-def template_href(template_name):
-    return "/" + template_alias(template_name)
-
 @filter
 def set_date(template_name, date):
-    global ALIASES
-    ALIASES[template_name]["date"] = date
+    jinjaenv.get().set_variable(template_name, "date", date)
     return ""
 
 @filter
 def get_date(template_name):
-    global ALIASES
-    return ALIASES[template_name].get("date")
+    return jinjaenv.get().get_variable(template_name, "date")
 
 @filter
 def set_title(template_name, title):
-    global ALIASES
-    ALIASES[template_name]["title"] = title
+    jinjaenv.get().set_variable(template_name, "title", title)
     return ""
 
 @filter
 def get_title(template_name):
-    global ALIASES
-    return ALIASES[template_name].get("title")
+    return jinjaenv.get().get_variable(template_name, "title")
 
 @filter
 def latest_pages(count):
-    dates = [(d["date"], n) for n, d in ALIASES.iteritems() if "date" in d]
+    dates = [(d, t) for t, d in jinjaenv.get().templates_with_variable("date")]
     dates.sort(reverse=True)
     return [d[1] for d in dates[:count]]
 
 @filter
 def add_alias(alias, template_name, variables={}):
-    global ALIASES
-    ALIASES[alias] = {
-            "template_name": template_name,
-            "variables": variables
-    }
-def get_alias(url):
-    return ALIASES.get(url)
-def list_aliases():
-    for alias, properties in ALIASES.iteritems():
-        yield alias
-    raise StopIteration
+    jinjaenv.get().add_alias(alias, template_name, variables)
 
 @filter
 def set_blog_template(template_name):
@@ -78,20 +53,15 @@ def add_blog_post(template_name, alias, title, date):
     set_title(alias, title)
     set_date(alias, date)
     return ""
+
 @filter
-def blog_post_template_name(alias):
-    if alias in ALIASES:
-        properties = ALIASES[alias]
-        if "variables" in properties:
-            if "post" in properties["variables"]:
-                return properties["variables"]["post"]
-    return None
+def blog_post_content(alias):
+    return jinjaenv.get().get_variable(alias, "post")
 
 @filter
 def add_media(folder):
     media.add(folder)
 
 def init():
-    global ALIASES, BLOG_TEMPLATE
-    ALIASES = defaultdict(dict)
+    global BLOG_TEMPLATE
     BLOG_TEMPLATE = None

@@ -230,13 +230,16 @@ class FiltersTest(unittest.TestCase):
         self.assertEqual("2013-11", filters.get_date("Title"))
 
     def test_date_variables(self):
+        # Set-get
+        filters.set_date("foo", "1901")
+        self.assertEqual("1901", filters.get_date("foo"))
+
+        # Set-get via config file
         root = tempfile.mkdtemp()
-        variables_path = os.path.join(root, "_config.html")
-        with open(variables_path, "w") as f:
+        config_path = os.path.join(root, "_config.html")
+        with open(config_path, "w") as f:
             f.write("{{ 'pouac'|set_date('2013-11-01') }}\n")
             f.write("{{ 'prout'|set_date('2013-10-01 18:15') }}")
-
-        self.assertEqual([], filters.latest_pages(1))
 
         jinjaenv.init(root)
 
