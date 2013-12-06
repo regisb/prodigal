@@ -38,7 +38,7 @@ class TemplateLoader(jinja2.loaders.BaseLoader):
     def list_templates(self):
         paths = []
         for alias, template_name in self.aliases.iteritems():
-            paths.append(template_name)
+            paths.append(alias)
         for (dirpath, dirnames, filenames) in os.walk(self.src_path):
             for filename in filenames:
                 path = os.path.join(dirpath, filename)
@@ -166,7 +166,8 @@ class Environment(object):
 
     def renderable_urls(self):
         for template_name in self._jinja_env.loader.list_templates():
-            yield os.path.join(self._src_path, template_name)
+            if not os.path.basename(template_name).startswith("_"):
+                yield os.path.join(self._src_path, template_name)
         raise StopIteration
 
 def init(src_path=None, locale=None):
