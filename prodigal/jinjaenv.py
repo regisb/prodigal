@@ -1,3 +1,5 @@
+import sys
+import inspect
 import os.path
 import babel.support
 import gettext
@@ -52,6 +54,13 @@ def _install_translations(jinja_env, src_path=None, locale=None):
     else:
         jinja_env.install_gettext_translations(gettext)
 
+def _register_filters(env):
+    # List all functions with @filter decorator in filters module
+    module = sys.modules["prodigal.filters"]
+    for (fn_name, fn) in inspect.getmembers(module, inspect.isfunction):
+        if hasattr(fn, "is_filter"):
+            env.filters[fn_name] = fn
+
 def _get_jinja_env(src_path=None, locale=None):
     """_get_jinja_env
     Get the jinja2 environment required to compile templates.
@@ -66,7 +75,7 @@ def _get_jinja_env(src_path=None, locale=None):
     env = jinja2.Environment(loader=template_loader,
                              extensions=['jinja2.ext.i18n'])
     _install_translations(env, src_path, locale)
-    filters.register_all(env)
+    _register_filters(env)
     return env
 
 class Environment(object):
