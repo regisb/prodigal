@@ -1,37 +1,96 @@
 import sys
 import inspect
+from collections import defaultdict
+
+ALIASES = defaultdict(dict)
+BLOG_TEMPLATE = None
 
 def filter(fn):
     fn.is_filter = True
     return fn
 
-TEMPLATE_DATES = {}
+def template_alias(template_name):
+    for alias, properties in ALIASES.iteritems():
+        if properties.get("template_name") == template_name:
+            return alias
+    return template_name
+
+@filter
+def template_name(alias):
+    if alias in ALIASES and "template_name" in ALIASES[alias]:
+        return ALIASES[alias]["template_name"]
+    return alias
+
+@filter
+def template_href(template_name):
+    return "/" + template_alias(template_name)
+
 @filter
 def set_date(template_name, date):
-    global TEMPLATE_DATES
-    TEMPLATE_DATES[template_name] = date
+    global ALIASES
+    ALIASES[template_name]["date"] = date
     return ""
 
 @filter
 def get_date(template_name):
-    return TEMPLATE_DATES.get(template_name)
+    global ALIASES
+    return ALIASES[template_name].get("date")
+
+@filter
+def set_title(template_name, title):
+    global ALIASES
+    ALIASES[template_name]["title"] = title
+    return ""
+
+@filter
+def get_title(template_name):
+    global ALIASES
+    return ALIASES[template_name].get("title")
 
 @filter
 def latest_pages(count):
-    dates = [(d, n) for n, d in TEMPLATE_DATES.iteritems()]
+    dates = [(d["date"], n) for n, d in ALIASES.iteritems() if "date" in d]
     dates.sort(reverse=True)
     return [d[1] for d in dates[:count]]
 
-URLS = {}
 @filter
-def add_url(url, template_name, variables={}):
-    global URLS
-    URLS[url] = {
+def add_alias(alias, template_name, variables={}):
+    global ALIASES
+    ALIASES[alias] = {
             "template_name": template_name,
             "variables": variables
     }
-def get_url(url):
-    return URLS.get(url)
+def get_alias(url):
+    return ALIASES.get(url)
+def list_aliases():
+    for alias, properties in ALIASES.iteritems():
+        yield alias
+    raise StopIteration
+
+@filter
+def set_blog_template(template_name):
+    global BLOG_TEMPLATE
+    BLOG_TEMPLATE = template_name
+
+@filter
+def add_blog_post(template_name, alias, title, date):
+    add_alias(alias, BLOG_TEMPLATE, {"post": template_name})
+    set_title(alias, title)
+    set_date(alias, date)
+    return ""
+@filter
+def blog_post_template_name(alias):
+    if alias in ALIASES:
+        properties = ALIASES[alias]
+        if "variables" in properties:
+            if "post" in properties["variables"]:
+                return properties["variables"]["post"]
+    return None
+
+def init():
+    global ALIASES, BLOG_TEMPLATE
+    ALIASES = defaultdict(dict)
+    BLOG_TEMPLATE = None
 
 def register_all(env):
     # List all functions with @filter decorator

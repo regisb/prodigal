@@ -117,24 +117,24 @@ class JinjaenvTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.src_path)
 
-    def test_render_url(self):
+    def test_render_path(self):
         path = os.path.join(self.src_path, "_foo.html")
 
         # No variables
         with open(path, "w") as f:
             f.write("catch")
-        filters.add_url("blog", "_foo.html")
-        self.assertEqual("catch", jinjaenv.get().render_url("blog"))
+        filters.add_alias("blog", "_foo.html")
+        self.assertEqual("catch", jinjaenv.get().render_relative_path("blog"))
         self.assertEqual("catch", jinjaenv.get().render_path(os.path.join(self.src_path, "blog")))
 
         # No variables
         with open(path, "w") as f:
             f.write("catch {{ times }}")
-        filters.add_url("blog", "_foo.html", {"times": 22})
+        filters.add_alias("blog", "_foo.html", {"times": 22})
 
         content = jinjaenv.get().render_template("_foo.html", {"times": 42})
         self.assertEqual("catch 42", content)
-        content = jinjaenv.get().render_url("blog")
+        content = jinjaenv.get().render_relative_path("blog")
         self.assertEqual("catch 22", content)
 
 class ToolsTranslateTest(unittest.TestCase):
@@ -145,6 +145,10 @@ class ToolsTranslateTest(unittest.TestCase):
         self.f2 = tempfile.NamedTemporaryFile(suffix=".htm", dir=self.src_path, delete=False)
         self.f1.write("{% trans %}Hello World!{% endtrans %}")
         self.f1.flush()
+
+    def tearDown(self):
+        shutil.rmtree(self.src_path)
+        shutil.rmtree(self.dst_path)
 
     def test_translate(self):
         po_path = os.path.join(self.src_path, "fr.po")
@@ -172,10 +176,6 @@ msgstr "Bonjour tout le monde !"
         # Translate twice
         tools.translate_templates("fr", self.src_path)
         self.assertEqual(translations, open(po_path).read())
-
-    def tearDown(self):
-        shutil.rmtree(self.src_path)
-        shutil.rmtree(self.dst_path)
 
 class ToolsGenerateTest(unittest.TestCase):
     def setUp(self):

@@ -50,11 +50,17 @@ def generate(src_path, dst_path, locale=None):
 def generate_templates(src_path, dst_path, locale):
     jinjaenv.init(src_path, locale)
     env = jinjaenv.get()
-    for template_name in env.renderable_template_names():
+    for url in env.renderable_urls():
         # Render
-        rendered = env.render_template(template_name)
+        rendered = env.render_path(url)
+        if rendered is None:
+            print "Warning: Could not find template for url", url
+            continue
 
         # Save
+        template_name = env.template_name(url)
+        if os.path.splitext(template_name)[1] == '':
+            template_name = os.path.join(template_name, "index.html")
         dst_file_path = os.path.join(dst_path, template_name)
         dst_dirname = os.path.dirname(dst_file_path)
         if not os.path.exists(dst_dirname):

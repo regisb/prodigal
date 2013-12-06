@@ -40,7 +40,7 @@ class HttpRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                     break
             else:
                 return self.list_directory(path)
-        ctype = self.guess_type(jinjaenv.get().url_file_path(path))
+        ctype = self.guess_type(jinjaenv.get().url_template_name(path))
 
         rendered = jinjaenv.get().render_path(path)
         if rendered is None:

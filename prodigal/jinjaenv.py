@@ -70,38 +70,48 @@ class Environment(object):
 
     def render_template(self, template_name, variables={}):
         template = self._jinja_env.get_template(template_name)
-        return template.render(variables).encode("utf-8")
+
+        varcopy = variables.copy()
+        if "template_name" not in varcopy:
+            varcopy["template_name"] = template_name
+        return template.render(varcopy).encode("utf-8")
 
     def render_string(self, string):
         return self._jinja_env.from_string(string).render()
 
-    def url_file_path(self, url):
+    def url_template_name(self, url):
         relative_url = self.template_name(url)
-        url = filters.get_url(relative_url)
+        url = filters.get_alias(relative_url)
         if url is not None:
             return os.path.join(self._src_path, url["template_name"])
         return relative_url
 
-    def render_path(self, path):
-        url = self.template_name(path)
-        return self.render_url(url)
+    def render_relative_path(self, path):
+        return self.render_path(os.path.join(self._src_path, path))
 
-    def render_url(self, url):
-        url_data = filters.get_url(url)
+    def render_path(self, path):
+        template_name = self.template_name(path)
+        url_data = filters.get_alias(template_name)
         if url_data is not None:
             return self.render_template(url_data["template_name"], url_data["variables"])
-        if templates.should_render(url) and url in self._jinja_env.list_templates():
-            return self.render_template(url, {})
-        path = os.path.join(self._src_path, url)
+        if templates.should_render(template_name) and template_name in self._jinja_env.list_templates():
+            return self.render_template(template_name, {})
+        path = os.path.join(self._src_path, template_name)
         if os.path.exists(path):
             return open(path, "rb").read()
         return None
 
-    def renderable_template_names(self):
+    def renderable_urls(self):
         for path in templates.list_renderable_files(self._src_path):
-            yield self.template_name(path)
+            yield path
+        for alias in filters.list_aliases():
+            yield os.path.join(self._src_path, alias)
+        raise StopIteration
 
 def init(src_path=None, locale=None):
+    if Environment._instance is not None:
+        del(Environment._instance)
+    filters.init()
     Environment._instance = Environment(src_path, locale)
 
 def reinit():
