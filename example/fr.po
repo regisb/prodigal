@@ -1,0 +1,7 @@
+#: example/index.html:3
+msgid "Here are the last posts:"
+msgstr "Voici les derniers posts :"
+
+#: example/blog/_post2.html:2
+msgid "This time I decided to translate this post in French."
+msgstr "Cette fois j'ai décidé de traduire ce post en français."

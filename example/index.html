@@ -1,2 +1,10 @@
 {% extends "_base.html" %}
-{% block content %}{% trans %}This is the homepage!{% endtrans %}{% endblock %}
+{% block content %}
+<p>{% trans %}Here are the last posts:{% endtrans %}</p>
+<ul>
+    {% for page in 2|latest_pages %}
+    <li><a href="{{ page }}">{{ page|get_title }}</a></li>
+    {% endfor %}
+</ul>
+<p>And <a href="/about.html">here</a> you can learn about me.</p>
+{% endblock %}

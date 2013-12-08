@@ -1,1 +1,5 @@
 {{ "static"|add_media }}
+
+{{ "blog/_post.html"|set_blog_template }}
+{{ "blog/_post1.html"|add_blog_post("post1", "Post #1", "2013-12-01") }}
+{{ "blog/_post2.html"|add_blog_post("post2", "Yet another post!", "2013-12-05") }}
