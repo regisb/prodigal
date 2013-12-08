@@ -131,24 +131,33 @@ class JinjaenvTest(unittest.TestCase):
         with open(path, "w") as f:
             f.write("catch {{ times }}")
         filters.add_alias("blog", "_foo.html", {"times": 22})
+        self.assertEqual(22, jinjaenv.get().get_variable("blog", "times"))
 
-        content = jinjaenv.get().render_template("_foo.html", {"times": 42})
-        self.assertEqual("catch 42", content)
-        content = jinjaenv.get().render_relative_path("blog")
-        self.assertEqual("catch 22", content)
+        jinjaenv.get().set_variable("_foo.html", "times", 32)
+        self.assertEqual(32, jinjaenv.get().get_variable("_foo.html", "times"))
+        self.assertEqual("catch 32", jinjaenv.get().render_template("_foo.html"))
+        self.assertEqual("catch 32", jinjaenv.get().render_relative_path("_foo.html"))
+
+        self.assertEqual("catch 42", jinjaenv.get().render_template("_foo.html", {"times": 42}))
+        self.assertEqual("catch 22", jinjaenv.get().render_relative_path("blog"))
 
 class ToolsTranslateTest(unittest.TestCase):
     def setUp(self):
         self.src_path = tempfile.mkdtemp()
         self.dst_path = tempfile.mkdtemp()
-        self.f1 = tempfile.NamedTemporaryFile(suffix=".html", dir=self.src_path, delete=False)
-        self.f2 = tempfile.NamedTemporaryFile(suffix=".htm", dir=self.src_path, delete=False)
+        subdir = os.path.join(self.src_path, "blog")
+        os.mkdir(subdir)
+        self.f1 = tempfile.NamedTemporaryFile(suffix=".html", dir=subdir, delete=False)
         self.f1.write("{% trans %}Hello World!{% endtrans %}")
         self.f1.flush()
 
     def tearDown(self):
         shutil.rmtree(self.src_path)
         shutil.rmtree(self.dst_path)
+
+    def test_list_translatable_files(self):
+        files = list(templates.list_translatable_files(self.src_path))
+        self.assertEqual([self.f1.name], files)
 
     def test_translate(self):
         po_path = os.path.join(self.src_path, "fr.po")

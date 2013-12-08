@@ -19,8 +19,7 @@ def translate_templates(locale, src_path):
     """
     po_path = os.path.join(src_path, locale + ".po")
     translator = translate.Translator(po_path)
-    for template_name in templates.list_translatable_names(src_path):
-        path = os.path.join(src_path, template_name)
+    for path in templates.list_translatable_files(src_path):
         translator.add_file(path)
     translator.write_po(po_path)
 

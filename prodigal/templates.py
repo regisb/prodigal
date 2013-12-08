@@ -43,9 +43,8 @@ def list_renderable_files(src_path):
             yield path
     raise StopIteration
 
-def list_translatable_names(src_path):
-    for (dirpath, dirnames, filenames) in os.walk(src_path):
-        for filename in filenames:
-            if should_translate(filename):
-                yield filename
+def list_translatable_files(src_path):
+    for path in list_files(src_path):
+        if should_translate(path):
+            yield path
     raise StopIteration
