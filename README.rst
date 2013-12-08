@@ -118,6 +118,21 @@ versions of the same website in two different languages. I needed to do that
 for `nulinu.li <http://nulinu.li>`_. I figured: how hard can it be? Existing
 bricks where already present in Django, I only had to pull them out.
 
+Q. How can I list recent blog posts by title?
+
+A. This is a frequent use case, so I included it in the example website located
+at example/. Basically, you need to list your blog posts in the _config.html
+file, which is rendered before all other templates and allows you to define
+custom variables to be used later in other templates. Then, you can list your
+blog posts using the `{{ 5|latest_pages }}` command in your templates.
+
+Q. Non-html files are not copied when I generate my website!
+
+A. The rendering engine of Prodigal renders only `*.html` files. If there is
+non-html content that you wish to include in your website, such as CSS,
+Javascript or image assets, you need to list them using the `{{ add_media }}`
+command. E.g: see the `example/_config.html` file.
+
 
 
     "Occasionally, members of the Institute of Arcane Study acquire a taste for
