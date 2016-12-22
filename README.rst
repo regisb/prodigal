@@ -108,7 +108,7 @@ F.A.Q
 
 Questions? Comments? Just open an issue request, tweet me at
 `@regisb <https://twitter.com/#!/regisb>`_, or shoot me an email at
-`regis@behmo.com <mailto:regis@behmo.com>`_.
+`prodigal@behmo.com <mailto:prodigal@behmo.com>`_.
 
 Q. There are so many static website generators already, why did you create
 another one?
